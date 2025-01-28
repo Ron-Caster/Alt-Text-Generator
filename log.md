@@ -23,8 +23,9 @@
 - Searching for other ways to mitigate/use VBA to resolve the issue.
 - Found out input should be ".docm" (Macro Enabled Doc File) instead of ".docx"
 - The VBA code for the purpose:
+  
     <details>
-  <summary style="color: turquoise;">Click to see the VBA code!</summary>
+    <summary style="color: turquoise;">Click to see the VBA code!</summary>
   
   ```vba
   Sub ExportAltText()
@@ -192,3 +193,204 @@
 
 - Assign names to images and add it along with alt-text.
 - If possible, get page numbers of the alt-texts extracted and add it in a new column.
+- Updated VBA Code:
+
+    <details>
+    <summary style="color: turquoise;">Click to see the VBA code!</summary>
+  
+    ```vba
+        Sub ExportAltTextWithNamesAndPageNumbers()
+
+        Dim strPictures As String
+        Dim docPictures As Document
+        Dim docTranslate As Document
+        Dim objInlinePic As InlineShape
+        Dim objFloatPic As Shape
+        Dim objTable As Table
+        Dim strTblAlt As String
+        Dim tblTranslate1 As Table
+        Dim tblTranslate2 As Table
+        Dim tblTranslate3 As Table
+        Dim tblTranslate4 As Table
+        Dim tblLoop As Table
+        Dim rowCurrent As Row
+        Dim oRg As Range
+        Dim picIndex As Integer
+        Dim pageNum As String
+
+        MsgBox "In the next dialog, select the file containing the pictures whose alt text will be exported."
+
+        strPictures = GetFileName()
+
+        If strPictures = "" Then Exit Sub
+
+        On Error GoTo BadInputFile
+        Set docPictures = Documents.Open(FileName:=strPictures)
+        Set docTranslate = Documents.Add
+
+        With docTranslate
+            ' Set up header and footer in translation document
+            .Sections(1).Headers(wdHeaderFooterPrimary).Range.Text = _
+                "Alt Text of " & docPictures.FullName
+            Set oRg = .Sections(1).Footers(wdHeaderFooterPrimary).Range
+            oRg.Text = vbTab
+            oRg.Collapse wdCollapseEnd
+            .Fields.Add Range:=oRg, Type:=wdFieldPage, PreserveFormatting:=False
+
+            ' Create three-column tables (Image Name, Original Alt Text, Page Number)
+            Set oRg = .Range
+            oRg.InsertAfter "Inline Pictures" & vbCr
+            Set oRg = .Range
+            oRg.Collapse wdCollapseEnd
+            Set tblTranslate1 = .Tables.Add(Range:=oRg, numrows:=2, numcolumns:=3)
+
+            Set oRg = .Range
+            oRg.InsertAfter "Floating Pictures" & vbCr
+            Set oRg = .Range
+            oRg.Collapse wdCollapseEnd
+            Set tblTranslate2 = .Tables.Add(Range:=oRg, numrows:=2, numcolumns:=3)
+
+            Set oRg = .Range
+            oRg.InsertAfter "Tables" & vbCr
+            Set oRg = .Range
+            oRg.Collapse wdCollapseEnd
+            Set tblTranslate3 = .Tables.Add(Range:=oRg, numrows:=2, numcolumns:=3)
+
+            Set oRg = .Range
+            oRg.InsertAfter "Author and Title" & vbCr
+            Set oRg = .Range
+            oRg.Collapse wdCollapseEnd
+            Set tblTranslate4 = .Tables.Add(Range:=oRg, numrows:=2, numcolumns:=3)
+
+            ' Save the docPictures path for future use
+            .Variables("docPictures").Value = docPictures.FullName
+        End With
+
+        ' Set up the tables with headers
+        For Each tblLoop In docTranslate.Tables
+            With tblLoop
+                .Cell(1, 1).Range.Text = "Image Name"
+                .Cell(1, 2).Range.Text = "Original Alt Text"
+                .Cell(1, 3).Range.Text = "Page Number"
+                .Rows(1).Range.Font.Bold = True
+                .Rows(1).HeadingFormat = True
+                .Borders.InsideColor = wdColorAutomatic
+                .Borders.InsideLineStyle = wdLineStyleSingle
+                .Borders.OutsideColor = wdColorAutomatic
+                .Borders.OutsideLineStyle = wdLineStyleSingle
+            End With
+        Next tblLoop
+
+        ' Export alt text for inline pictures
+        picIndex = 1
+        For Each objInlinePic In docPictures.InlineShapes
+            If objInlinePic.AlternativeText <> "" Then
+                pageNum = objInlinePic.Range.Information(wdActiveEndAdjustedPageNumber)
+                tblTranslate1.Rows.Add
+                tblTranslate1.Rows.Last.Cells(1).Range.Text = "Inline Picture " & picIndex
+                tblTranslate1.Rows.Last.Cells(2).Range.Text = objInlinePic.AlternativeText
+                tblTranslate1.Rows.Last.Cells(3).Range.Text = pageNum
+                picIndex = picIndex + 1
+            End If
+        Next objInlinePic
+        tblTranslate1.Rows.Last.Delete
+
+        ' Export alt text for floating pictures
+        picIndex = 1
+        For Each objFloatPic In docPictures.Shapes
+            If objFloatPic.AlternativeText <> "" Then
+                pageNum = objFloatPic.Anchor.Information(wdActiveEndAdjustedPageNumber)
+                tblTranslate2.Rows.Add
+                tblTranslate2.Rows.Last.Cells(1).Range.Text = "Floating Picture " & picIndex
+                tblTranslate2.Rows.Last.Cells(2).Range.Text = objFloatPic.AlternativeText
+                tblTranslate2.Rows.Last.Cells(3).Range.Text = pageNum
+                picIndex = picIndex + 1
+            End If
+        Next objFloatPic
+        tblTranslate2.Rows.Last.Delete
+
+        ' Export alt text for tables
+        picIndex = 1
+        For Each objTable In docPictures.Tables
+            strTblAlt = ""
+            If objTable.Descr <> "" Then strTblAlt = objTable.Descr
+            If objTable.Title <> "" Then strTblAlt = objTable.Title & vbCr & strTblAlt
+            If Len(strTblAlt) > 1 Then
+                pageNum = objTable.Range.Information(wdActiveEndAdjustedPageNumber)
+                tblTranslate3.Rows.Add
+                tblTranslate3.Rows.Last.Cells(1).Range.Text = "Table " & picIndex
+                tblTranslate3.Rows.Last.Cells(2).Range.Text = strTblAlt
+                tblTranslate3.Rows.Last.Cells(3).Range.Text = pageNum
+                picIndex = picIndex + 1
+            End If
+        Next objTable
+        tblTranslate3.Rows.Last.Delete
+
+        ' Export author and title
+        With tblTranslate4
+            .Rows.Last.Cells(1).Range.Text = "Author"
+            .Rows.Add
+            .Rows.Last.Cells(1).Range.Text = docPictures.BuiltInDocumentProperties("Author").Value
+            .Rows.Add
+            .Rows.Last.Cells(1).Range.Text = "Title"
+            .Rows.Add
+            .Rows.Last.Cells(1).Range.Text = docPictures.BuiltInDocumentProperties("Title").Value
+        End With
+
+        ' Save the new translation document
+        docTranslate.SaveAs FileName:=Replace(strPictures, ".doc", " Alt Text.doc")
+        MsgBox "Alt text, image names, and page numbers have been exported and saved as 'Alt Text.doc'."
+        docPictures.Close wdDoNotSaveChanges
+
+        Exit Sub
+
+    BadInputFile:
+        MsgBox "The file " & strPictures & " could not be opened." & _
+            vbCr & "Error " & Err.Number & vbCr & Err.Description
+    End Sub
+
+    ' Helper functions
+    Function GetFileName() As String
+        Dim dlg As FileDialog
+        Set dlg = Application.FileDialog(msoFileDialogFilePicker)
+        If dlg.Show <> -1 Then
+            GetFileName = ""
+        Else
+            GetFileName = dlg.SelectedItems(1)
+        End If
+    End Function
+    ```
+
+### What This Code Does
+
+1. Image Names:
+
+    - Inline and floating images are automatically assigned sequential names, e.g., Inline Picture 1, Floating Picture 1, etc.
+    - Tables are named sequentially as Table 1, Table 2, etc.
+
+2. Page Numbers:
+
+    - Retrieves the page number where each image or table appears in the document using wdActiveEndAdjustedPageNumber.
+    - Adds the page number to a new column in the output document.
+
+3. Output Structure:
+
+    - Each table now has three columns:
+        1. Image/Table Name
+        2. Original Alt Text
+        3. Page Number
+
+4. Saves Output:
+
+    - Creates a new document (OriginalFileName Alt Text.doc) with this updated structure.
+
+### Expected Output
+- A Word document with the following tables:
+    1. Inline Pictures:
+        - Image Name, Alt Text, and Page Number.
+    2. Floating Pictures:
+        - Image Name, Alt Text, and Page Number.
+    3. Tables:
+        - Table Name, Alt Text (Title + Description), and     Page Number.
+    4. Author and Title:
+        - Metadata for the document.
