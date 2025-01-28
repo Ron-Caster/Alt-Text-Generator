@@ -613,3 +613,164 @@
         - Includes table names, alt-text (from Title or Description), and page numbers.
     4. Author and Title:
         - Metadata from the document.
+
+## V1.3 Improvements
+
+- Generate Excel file when the VBA code is run, rather than generating another .docm file with tables.
+- *Prompt given for updating code:*
+    ```
+    Can you update the code such that it creates an excel file with same data rather than a word file with columns?
+- Updated VBA Code:
+
+    <details>
+    <summary style="color: turquoise;">Click to see the VBA code!</summary>
+  
+    ```vba
+        Sub ExportAllImagesWithAltTextToExcel()
+
+        Dim strPictures As String
+        Dim docPictures As Document
+        Dim objInlinePic As InlineShape
+        Dim objFloatPic As Shape
+        Dim objTable As Table
+        Dim picIndex As Integer
+        Dim pageNum As String
+        Dim strTblAlt As String
+        
+        ' Excel-related variables
+        Dim xlApp As Object
+        Dim xlWB As Object
+        Dim xlSheet As Object
+        Dim currentRow As Long
+
+        ' Prompt to select a Word file
+        MsgBox "In the next dialog, select the Word file containing the images whose alt text will be exported."
+        strPictures = GetFileName()
+        If strPictures = "" Then Exit Sub
+
+        On Error GoTo ErrorHandler
+        Set docPictures = Documents.Open(FileName:=strPictures)
+        
+        ' Create Excel application and workbook
+        Set xlApp = CreateObject("Excel.Application")
+        Set xlWB = xlApp.Workbooks.Add
+        Set xlSheet = xlWB.Sheets(1)
+        xlApp.Visible = True
+        
+        ' Add headers to Excel
+        With xlSheet
+            .Cells(1, 1).Value = "Image Name"
+            .Cells(1, 2).Value = "Original Alt Text"
+            .Cells(1, 3).Value = "Page Number"
+            .Rows(1).Font.Bold = True
+        End With
+        
+        ' Start adding data from row 2
+        currentRow = 2
+        
+        ' Export inline pictures
+        picIndex = 1
+        For Each objInlinePic In docPictures.InlineShapes
+            pageNum = objInlinePic.Range.Information(wdActiveEndAdjustedPageNumber)
+            xlSheet.Cells(currentRow, 1).Value = "Inline Picture " & picIndex
+            
+            If objInlinePic.AlternativeText <> "" Then
+                xlSheet.Cells(currentRow, 2).Value = objInlinePic.AlternativeText
+            Else
+                xlSheet.Cells(currentRow, 2).Value = "Missing"
+            End If
+            
+            xlSheet.Cells(currentRow, 3).Value = pageNum
+            currentRow = currentRow + 1
+            picIndex = picIndex + 1
+        Next objInlinePic
+        
+        ' Export floating pictures
+        picIndex = 1
+        For Each objFloatPic In docPictures.Shapes
+            pageNum = objFloatPic.Anchor.Information(wdActiveEndAdjustedPageNumber)
+            xlSheet.Cells(currentRow, 1).Value = "Floating Picture " & picIndex
+            
+            If objFloatPic.AlternativeText <> "" Then
+                xlSheet.Cells(currentRow, 2).Value = objFloatPic.AlternativeText
+            Else
+                xlSheet.Cells(currentRow, 2).Value = "Missing"
+            End If
+            
+            xlSheet.Cells(currentRow, 3).Value = pageNum
+            currentRow = currentRow + 1
+            picIndex = picIndex + 1
+        Next objFloatPic
+        
+        ' Export tables
+        picIndex = 1
+        For Each objTable In docPictures.Tables
+            strTblAlt = ""
+            If objTable.Descr <> "" Then strTblAlt = objTable.Descr
+            If objTable.Title <> "" Then strTblAlt = objTable.Title & vbCr & strTblAlt
+            If Len(strTblAlt) > 1 Then
+                pageNum = objTable.Range.Information(wdActiveEndAdjustedPageNumber)
+                xlSheet.Cells(currentRow, 1).Value = "Table " & picIndex
+                xlSheet.Cells(currentRow, 2).Value = strTblAlt
+                xlSheet.Cells(currentRow, 3).Value = pageNum
+                currentRow = currentRow + 1
+                picIndex = picIndex + 1
+            End If
+        Next objTable
+        
+        ' Save the Excel file
+        Dim excelFilePath As String
+        excelFilePath = Replace(docPictures.FullName, ".docx", " Alt Text.xlsx")
+        xlWB.SaveAs excelFilePath
+        MsgBox "Alt text and page numbers have been exported to Excel: " & excelFilePath
+
+        ' Clean up
+        docPictures.Close wdDoNotSaveChanges
+        Set xlSheet = Nothing
+        Set xlWB = Nothing
+        Set xlApp = Nothing
+        Exit Sub
+
+    ErrorHandler:
+        MsgBox "An error occurred: " & Err.Description
+        On Error Resume Next
+        If Not xlApp Is Nothing Then xlApp.Quit
+        Set xlSheet = Nothing
+        Set xlWB = Nothing
+        Set xlApp = Nothing
+        If Not docPictures Is Nothing Then docPictures.Close wdDoNotSaveChanges
+    End Sub
+
+    ' Helper function to select a file
+    Function GetFileName() As String
+        Dim dlg As FileDialog
+        Set dlg = Application.FileDialog(msoFileDialogFilePicker)
+        If dlg.Show <> -1 Then
+            GetFileName = ""
+        Else
+            GetFileName = dlg.SelectedItems(1)
+        End If
+    End Function
+    ```
+
+### What This Update Does
+
+1. Switches to Excel:
+
+    - The macro creates an Excel workbook and adds three columns:
+        - Image Name: Names images sequentially (e.g., "Inline Picture 1").
+        - Original Alt Text: Displays alt-text or "Missing" if none is present.
+        - Page Number: Shows the page number where the image is located.
+
+2. Handles All Image Types:
+
+    - Extracts inline images, floating images, and tables.
+    - For tables, it combines the Title and Description properties into the Original Alt Text column.
+
+3. Automatic Save:
+
+    - Saves the generated Excel file in the same directory as the original Word document, appending " Alt Text.xlsx" to the filename.
+
+4. Error Handling:
+
+    - Displays a meaningful error message if something goes wrong.
