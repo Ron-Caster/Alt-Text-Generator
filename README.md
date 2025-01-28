@@ -1,4 +1,4 @@
-## 27 January, 2025
+# 27 January, 2025
 
 - Got assigned to create a program for adding alt-text to word documents.
 - Started creating LaTeX report for the program.
@@ -10,7 +10,7 @@
     - Openpyxl (Document Handling)
 - Learnt and started using LaTeX for creating the report.
 
-## 28 January, 2025
+# 28 January, 2025
 
 - Tried to create a python script to extract the alt-texts from the word file.
 - Found out the word file provided wasn't having a single alt-text in the images.
@@ -23,7 +23,7 @@
 - Searching for other ways to mitigate/use VBA to resolve the issue.
 - Found out input should be ".docm" (Macro Enabled Doc File) instead of ".docx"
 
-### V1.0 Program
+## V1.0 Program
 
 - The VBA code for the purpose:
   
@@ -176,7 +176,7 @@
       End If
   End Function 
   ```
-#### Steps to Follow:
+### Steps to Follow:
 
 - Open the *Macro Enabled Word Document*.
 - Press *ALT + F11* to open *Microsoft Visual Basic Console* or (*Fn + Alt + F11*).
@@ -192,7 +192,7 @@
 - Then *Filename Alt Text.docm* will be created in the same folder.
 - *Filename Alt Text.docm* will contain the extracted alternative text.
 
-### V1.1 Improvements
+## V1.1 Improvements
 
 - Assign names to images and add it along with alt-text.
 - If possible, get page numbers of the alt-texts extracted and add it in a new column.
@@ -364,7 +364,7 @@
     End Function
     ```
 
-#### What This Code Does
+### What This Code Does
 
 1. Image Names:
 
@@ -387,7 +387,7 @@
 
     - Creates a new document (OriginalFileName Alt Text.doc) with this updated structure.
 
-#### Expected Output
+### Expected Output
 
 - A Word document with the following tables:
     1. Inline Pictures:
@@ -399,7 +399,7 @@
     4. Author and Title:
         - Metadata for the document.
 
-### V1.2 Improvements
+## V1.2 Improvements
 
 - The images without alt-text aren't considered in the current code.
 - *Prompt given for updating code:*
@@ -582,7 +582,7 @@
         End If
     End Function
     ```
-#### What This Update Does
+### What This Update Does
 
 1. Includes All Images:
 
@@ -602,7 +602,7 @@
 4. Saves Output:
     - Creates a Word document (OriginalFileName Alt Text.doc) with the updated data.
 
-#### Expected Output
+### Expected Output
 
 - A Word document with the following sections:
     1. Inline Pictures:
