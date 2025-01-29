@@ -801,6 +801,9 @@
 
 - *extract_alt_text.vbs*
 
+    <details>
+    <summary style="color: turquoise;">Click to see the VBScript code!</summary>
+
     ```vbs
     Dim objWord, objDoc, objFSO, objFile
     Dim objInlineShape, objShape
@@ -858,6 +861,9 @@
 ### Script to Update Alt-Text
 
 - *update_alt_text.vbs*
+
+    <details>
+    <summary style="color: turquoise;">Click to see the VBScript code!</summary>
 
     ```vbs
     Dim objWord, objDoc, objFSO, objFile
@@ -927,6 +933,9 @@
 ### Python Script to Automate
 
 - *automate_scripts.py*
+
+    <details>
+    <summary style="color: turquoise;">Click to see the Python Script code!</summary>
 
     ```py
     import os
