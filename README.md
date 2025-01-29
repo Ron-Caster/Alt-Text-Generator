@@ -774,3 +774,18 @@
 4. Error Handling:
 
     - Displays a meaningful error message if something goes wrong.
+
+# 29 January, 2025
+
+- Successful in retreiving the alt-text from images in .docm file.
+- Data is saved in excel sheet.
+- *Now I have to find out how to add custom alt-text updated in this excel sheet to the .docm file.*
+- Understood whatever is necessary.
+- Found out: Inline or Floating images in Word (.docm) file is not having any names or identifiers attached to it.
+- But it can be added using *VBA*.
+- Decided to try *VBScript* as I have ran out of options.
+- It is possible to automate *VBScript* unlike *VBA* using *Python*.
+- Tired of copy pasting and reading unnecessary doumentation given by ChatGPT.
+- Decided to use *GitHub Copilot Pro* for continued development to improve efficiency.
+- Planning to give *Alt-Text Automation* Plan Prompt Engineered from ChatGPT to GitHub Pilot.
+- 
